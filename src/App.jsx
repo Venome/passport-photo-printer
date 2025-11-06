@@ -329,7 +329,7 @@ const PassportPhotoPrinter = () => {
       const url = URL.createObjectURL(blob);
       const link = document.createElement('a');
       link.href = url;
-      link.download = 'pas-foto-300dpi.png';
+      link.download = 'passport-photo-300dpi.png';
       link.click();
       URL.revokeObjectURL(url);
     }, 'image/png');
