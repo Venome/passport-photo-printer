@@ -143,8 +143,32 @@ const PassportPhotoPrinter = () => {
           ctx.fillRect(x - borderPx, y - borderPx, photoW + (borderPx * 2), photoH + (borderPx * 2));
         }
         
-        // Gambar foto
-        ctx.drawImage(photo.img, x, y, photoW, photoH);
+        // Hitung crop untuk maintain aspect ratio (cover mode)
+        const targetRatio = photoW / photoH;
+        const imgRatio = photo.width / photo.height;
+        
+        let sx, sy, sWidth, sHeight;
+        
+        if (imgRatio > targetRatio) {
+          // Image lebih lebar, crop kiri-kanan
+          sHeight = photo.height;
+          sWidth = photo.height * targetRatio;
+          sx = (photo.width - sWidth) / 2;
+          sy = 0;
+        } else {
+          // Image lebih tinggi, crop atas-bawah
+          sWidth = photo.width;
+          sHeight = photo.width / targetRatio;
+          sx = 0;
+          sy = (photo.height - sHeight) / 2;
+        }
+        
+        // Gambar foto dengan crop
+        ctx.drawImage(
+          photo.img,
+          sx, sy, sWidth, sHeight,  // source rectangle (crop)
+          x, y, photoW, photoH      // destination rectangle
+        );
       } catch (e) {
         console.error('Error drawing image:', e);
       }
@@ -329,7 +353,7 @@ const PassportPhotoPrinter = () => {
       const url = URL.createObjectURL(blob);
       const link = document.createElement('a');
       link.href = url;
-      link.download = 'passport-photo-300dpi.png';
+      link.download = 'pas-foto-300dpi.png';
       link.click();
       URL.revokeObjectURL(url);
     }, 'image/png');
