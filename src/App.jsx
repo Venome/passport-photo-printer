@@ -1,5 +1,5 @@
-import React, { useState, useRef } from 'react';
-import { Upload, Download, ImageIcon, Trash2, Printer } from 'lucide-react';
+import React, { useState, useRef, useEffect } from 'react';
+import { Upload, Download, ImageIcon, Trash2, Printer, FileText } from 'lucide-react';
 
 const PassportPhotoPrinter = () => {
   // Preset ukuran pas foto dalam mm
@@ -34,6 +34,20 @@ const PassportPhotoPrinter = () => {
   const canvasRef = useRef(null);
   const printCanvasRef = useRef(null);
   const fileInputRef = useRef(null);
+  const [jsPDFLoaded, setJsPDFLoaded] = useState(false);
+
+  // Load jsPDF dari CDN
+  useEffect(() => {
+    const script = document.createElement('script');
+    script.src = 'https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js';
+    script.async = true;
+    script.onload = () => setJsPDFLoaded(true);
+    document.body.appendChild(script);
+    
+    return () => {
+      document.body.removeChild(script);
+    };
+  }, []);
 
   const loadImageWithExif = (file) => {
     return new Promise((resolve) => {
@@ -344,8 +358,8 @@ const PassportPhotoPrinter = () => {
     }
   };
 
-  // Download PDF menggunakan canvas to blob
-  const downloadPDF = () => {
+  // Download PNG
+  const downloadPNG = () => {
     const canvas = canvasRef.current;
     renderToCanvas(canvas, 300);
     
@@ -353,9 +367,47 @@ const PassportPhotoPrinter = () => {
       const url = URL.createObjectURL(blob);
       const link = document.createElement('a');
       link.href = url;
-      link.download = 'pas-foto-300dpi.png';
+      link.download = 'passport-photo-300dpi.png';
       link.click();
       URL.revokeObjectURL(url);
+    }, 'image/png');
+  };
+
+  // Download PDF
+  const downloadPDF = () => {
+    if (!jsPDFLoaded || !window.jspdf) {
+      alert('PDF library is still loading. Please wait a moment and try again.');
+      return;
+    }
+
+    const canvas = canvasRef.current;
+    renderToCanvas(canvas, 300);
+    
+    canvas.toBlob((blob) => {
+      const url = URL.createObjectURL(blob);
+      const img = new Image();
+      
+      img.onload = () => {
+        const paper = selectedPaper.label === 'Custom' ? customPaper : selectedPaper;
+        const { jsPDF } = window.jspdf;
+        
+        // Buat PDF dengan ukuran kertas yang sesuai
+        const pdf = new jsPDF({
+          orientation: paper.width > paper.height ? 'landscape' : 'portrait',
+          unit: 'mm',
+          format: [paper.width, paper.height]
+        });
+        
+        // Tambahkan image ke PDF (full size, 300 DPI quality)
+        pdf.addImage(img, 'PNG', 0, 0, paper.width, paper.height, '', 'FAST');
+        
+        // Download PDF
+        pdf.save('passport-photo.pdf');
+        
+        URL.revokeObjectURL(url);
+      };
+      
+      img.src = url;
     }, 'image/png');
   };
 
@@ -680,6 +732,15 @@ const PassportPhotoPrinter = () => {
           
           <button
             onClick={downloadPDF}
+            disabled={photos.length === 0 || !jsPDFLoaded}
+            className="w-full bg-red-500 hover:bg-red-600 disabled:bg-gray-300 disabled:cursor-not-allowed text-white py-3 px-4 rounded flex items-center justify-center gap-2 font-semibold"
+          >
+            <FileText size={20} />
+            {jsPDFLoaded ? 'Download PDF' : 'Loading PDF...'}
+          </button>
+          
+          <button
+            onClick={downloadPNG}
             disabled={photos.length === 0}
             className="w-full bg-green-500 hover:bg-green-600 disabled:bg-gray-300 disabled:cursor-not-allowed text-white py-3 px-4 rounded flex items-center justify-center gap-2 font-semibold"
           >
