@@ -341,6 +341,12 @@ const PassportPhotoPrinter = () => {
   };
 
   const downloadPNG = () => {
+    gtag?.('event', 'click_download_png', {
+      event_category: 'button',
+      event_label: 'Download PNG',
+      value: 1
+    });
+
     const canvas = canvasRef.current;
     renderToCanvas(canvas, 300);
     canvas.toBlob((blob) => {
@@ -354,6 +360,13 @@ const PassportPhotoPrinter = () => {
   };
 
   const downloadPDF = () => {
+    gtag?.('event', 'click_download_pdf', {
+      event_category: 'button',
+      event_label: 'Download PDF',
+      value: 1
+    });
+
+
     if (!jsPDFLoaded || !window.jspdf) {
       alert('PDF library is still loading. Please wait a moment and try again.');
       return;
@@ -387,6 +400,12 @@ const PassportPhotoPrinter = () => {
   };
 
   const handlePrint = () => {
+    gtag?.('event', 'click_print', {
+      event_category: 'button',
+      event_label: 'Print Now',
+      value: 1
+    });
+    
     const canvas = printCanvasRef.current;
     renderToCanvas(canvas, 300);
     
